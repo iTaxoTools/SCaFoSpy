@@ -149,10 +149,11 @@ def sort_aligns_to_sample(alignments: list) -> dict:
     """
 
     outdict = {}
-
+    all_seqs = []
     for sample in alignments:
         id = sample[0]
         seq = sample[1]
+        all_seqs.append(seq)
         if not id in outdict:
             outdict.update({id : [seq]})
         else: 
@@ -160,7 +161,7 @@ def sort_aligns_to_sample(alignments: list) -> dict:
             temp.append(seq)
             outdict.update({id : temp})
 
-    return outdict
+    return outdict, all_seqs
 
 
 

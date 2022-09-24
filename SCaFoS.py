@@ -12,11 +12,28 @@ __usage__ = """
             python3 SCaFoS.py
             --dir <PATH_TO_INPUT_DIRECTORY>
             --out <PATH_TO_OUTPUT_DIRECTORY>
-            --type <select between 'nucleotide' OR 'protein'>
+            --type <select between 'nucleotide' OR 'protein'>   
+            --mode <select between 'abiguity' OR 'longest_sequence'
 
             """
 
-def compare_sequences_by_character(sequences_list: list, type : str) -> str:
+def get_n_information_sequence(sequence: str, missing: list) -> int:
+    """
+    Getting the number of information characters in a sequence. (Characters that are not missing data)
+    
+    :param String sequence: sequence (nucleotide or protein)
+
+    :return informationcount: number of information characters
+    """
+
+    informationcount = 0
+    for char in sequence:
+        if not char in missing:
+           informationcount += 1
+
+    return informationcount
+
+def compare_sequences_by_character(sequences_list: list,all_seqs: list, type : str, mode: str) -> str:
     """
     Comparing multiple sequences by character and creating one consesus sequence.
 
@@ -34,11 +51,12 @@ def compare_sequences_by_character(sequences_list: list, type : str) -> str:
     if not sequences_list:
         return print("Sequence list did not contain any sequences!")
 
-    for n in range(len(sequences_list[0])):
-        
+    sorted_sequences = sorted(sequences_list, key=lambda x: get_n_information_sequence(x, missing), reverse=True)
+    for n in range(len(sorted_sequences[0])):
+            
         na = []
         chars = []
-        for seq in sequences_list:
+        for seq in sorted_sequences:
             
             if seq[n] in missing:
                 na.append(seq[n])
@@ -53,7 +71,22 @@ def compare_sequences_by_character(sequences_list: list, type : str) -> str:
             if Utils.all_equal(chars):
                 consensus.append(chars[0])
             else:
-                consensus.append("?")
+                if mode == "ambiguity":
+                    consensus.append("?")
+
+                if mode == "longest_sequence":
+                    consensus.append(chars[0])
+
+                if mode == "lowest_divergence":
+                    all_chars = []
+                    for all_seq in all_seqs:
+                        all_chars.append(all_seq[n])
+
+                    char = Utils.most_frequent(all_chars)
+                    consensus.append(char)
+
+
+
         
         else:
             consensus.append(Utils.most_frequent(na))
@@ -70,6 +103,7 @@ def __Main__(args):
     dir = args[args.index("--dir")+1 ]
     outdir = args[args.index("--out") +1 ]
     types = args[args.index("--type")+1 ]
+    mode = args[args.index("--mode")+1 ]
 
     files = [join(dir, f) for f in listdir(dir) if isfile(join(dir, f))]
 
@@ -77,22 +111,19 @@ def __Main__(args):
         filename = basename(file)
         aligns = Utils.load_fasta_ali_file(file)
 
-        sorted_aligns = Utils.sort_aligns_to_sample(aligns)
+        sorted_aligns, all_seqs = Utils.sort_aligns_to_sample(aligns)
 
         consensus_seqs = []
         for name,sequences in sorted_aligns.items():
-            consensus = compare_sequences_by_character(sequences,types)
+            consensus = compare_sequences_by_character(sequences, all_seqs, types, mode)
             consensus_seqs.append([name,consensus])
 
         outfile = filename
         Utils.write_scafos_output(outdir,outfile,consensus_seqs,types)
 
-__Main__("--dir /Users/david/Development/SCAFOS/data --out /Users/david/Development/SCAFOS/data --type protein")
 
-"""
-if "--dir" in sys.argv and "--out" in sys.argv and "--type" in sys.argv:
+if "--dir" in sys.argv and "--out" in sys.argv and "--type" in sys.argv and "--mode" in sys.argv:
     __Main__(sys.argv)
 
 else:
     print(__usage__)
-"""
