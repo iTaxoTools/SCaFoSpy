@@ -2,18 +2,18 @@
 #### David Leiße ####
 #### david.leisse@uni-bielefeld.de ####
 
-
-import Utils
 import sys 
 from os import listdir
 from os.path import isfile, join, basename
+
+from . import Utils
 
 __usage__ = """
             python3 SCaFoS.py
             --dir <PATH_TO_INPUT_DIRECTORY>
             --out <PATH_TO_OUTPUT_DIRECTORY>
             --type <select between 'nucleotide' OR 'protein'>   
-            --mode <select between 'abiguity' OR 'longest_sequence'
+            --mode <select between 'ambiguity' OR 'longest_sequence'
 
             """
 
@@ -121,9 +121,9 @@ def __Main__(args):
         outfile = filename
         Utils.write_scafos_output(outdir,outfile,consensus_seqs,types)
 
+def run():
+    if "--dir" in sys.argv and "--out" in sys.argv and "--type" in sys.argv and "--mode" in sys.argv:
+        __Main__(sys.argv)
 
-if "--dir" in sys.argv and "--out" in sys.argv and "--type" in sys.argv and "--mode" in sys.argv:
-    __Main__(sys.argv)
-
-else:
-    print(__usage__)
+    else:
+        print(__usage__)
